@@ -44,16 +44,16 @@
     <h2 class="font-display text-xl tracking-wide">Upload New Beat</h2>
     <form id="upload-form" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <label for="f-title" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Title *</label>
-        <input type="text" id="f-title" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" required />
+        <label for="f-title" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Title</label>
+        <input type="text" id="f-title" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
       </div>
       <div>
         <label for="f-bpm" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">BPM (optional)</label>
         <input type="number" id="f-bpm" step="0.1" placeholder="120" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
       </div>
       <div>
-        <label for="f-genre" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Genre *</label>
-        <select id="f-genre" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" required>
+        <label for="f-genre" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Genre</label>
+        <select id="f-genre" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none">
           <option value="">Select genre</option>
           <option value="afrobeat">Afrobeat</option>
           <option value="trap">Rap/Trap</option>
@@ -62,16 +62,16 @@
         </select>
       </div>
       <div>
-        <label for="f-price" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Price (₦) *</label>
-        <input type="number" id="f-price" placeholder="5000" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" required />
+        <label for="f-price" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Price (₦)</label>
+        <input type="number" id="f-price" placeholder="5000" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
       </div>
       <div>
         <label for="f-key" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Key (optional)</label>
         <input type="text" id="f-key" placeholder="C#m, F, Am" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
       </div>
       <div class="md:col-span-2">
-        <label for="f-audio" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Audio File (MP3 / WAV) *</label>
-        <input type="file" id="f-audio" accept="audio/*" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" required />
+        <label for="f-audio" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Audio File (MP3 / WAV)</label>
+        <input type="file" id="f-audio" accept="audio/*" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
       </div>
       <div class="md:col-span-2 flex items-center gap-4">
         <button type="submit" id="upload-submit-btn" class="font-mono text-sm uppercase tracking-widest px-6 py-2.5 rounded-md bg-tape text-ink font-bold hover:bg-tape/90 transition focus-ring">
@@ -274,29 +274,27 @@
       const key = document.getElementById('f-key').value.trim() || null;
       const file = document.getElementById('f-audio').files[0];
 
-      if (!title || !genre || !price || !file) {
-        uploadError.textContent = 'Title, Genre, Price, and Audio are required.';
-        uploadError.classList.remove('hidden');
-        return;
-      }
-
       uploadBtn.disabled = true;
       progressWrap.classList.remove('hidden');
       progressWrap.classList.add('flex');
 
       try {
-        const result = await uploadToCloudinary(file, (pct) => {
-          progressFill.style.width = pct + '%';
-          progressPct.textContent = pct + '%';
-        });
+        let audioUrl = null;
+        if (file) {
+          const result = await uploadToCloudinary(file, (pct) => {
+            progressFill.style.width = pct + '%';
+            progressPct.textContent = pct + '%';
+          });
+          audioUrl = result.secure_url;
+        }
 
         const newBeat = {
-          title,
+          title: title || 'Untitled',
           bpm,
-          genre,
-          price,
+          genre: genre || null,
+          price: price || 0,
           key,
-          audioUrl: result.secure_url,
+          audioUrl,
         };
 
         await saveBeatToSupabase(newBeat);
