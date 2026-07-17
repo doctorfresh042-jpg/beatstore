@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prod By Doctor Fresh — Beat Store</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: "#0E0D0C",
+          surface: "#1A1816",
+          surface2: "#221F1C",
+          bone: "#F2EFE9",
+          bonedim: "#B8B2A7",
+          tape: "#FF4D00",
+          afro: "#FFB800",
+          trap: "#FF2E4D",
+          rage: "#B026FF",
+          rnb: "#00C2A8",
+        },
+        fontFamily: {
+          display: ["Anton", "sans-serif"],
+          body: ["Inter", "sans-serif"],
+          mono: ["'JetBrains Mono'", "monospace"],
+        },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { -webkit-user-select: none; user-select: none; }
+  input, textarea { user-select: text; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #0E0D0C; }
+  ::-webkit-scrollbar-thumb { background: #3A362F; border-radius: 4px; }
+  .tape-track { background: repeating-linear-gradient(90deg, #2A2620 0 1px, transparent 1px 8px); }
+  .eq-bar { transform-origin: bottom; transition: transform 0.12s ease; }
+  @keyframes eqIdle { 0%,100% { transform: scaleY(0.15); } 50% { transform: scaleY(0.15); } }
+  #watermark-layer {
+    position: fixed; inset: 0; z-index: 40; pointer-events: none;
+    overflow: hidden; opacity: 0.05;
+  }
+  #watermark-track {
+    position: absolute; white-space: nowrap; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: #F2EFE9; letter-spacing: 0.15em;
+    animation: driftWatermark 90s linear infinite;
+  }
+  @keyframes driftWatermark {
+    from { transform: translate(0, 0) rotate(-8deg); }
+    to   { transform: translate(-50%, -50%) rotate(-8deg); }
+  }
+  .focus-ring:focus-visible { outline: 2px solid #FF4D00; outline-offset: 2px; }
+  .beat-card.extra { display: none; }
+  .genre-expanded .beat-card.extra { display: flex; }
+</style>
+</head>
+<body class="bg-ink text-bone font-body antialiased">
+
+<div id="watermark-layer"><div id="watermark-track"></div></div>
+
+<!-- HEADER -->
+<header class="sticky top-0 z-30 bg-ink/90 backdrop-blur border-b border-surface2">
+  <div class="max-w-6xl mx-auto px-5 md:px-8 py-4 flex items-center justify-between">
+    <a href="#" id="site-title" class="font-display text-2xl tracking-wide text-bone cursor-pointer select-none">
+      PROD BY <span class="text-tape">DOCTOR FRESH</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-6 font-mono text-xs uppercase tracking-widest text-bonedim">
+      <a href="#afrobeat" class="hover:text-afro transition">Afrobeat</a>
+      <a href="#trap" class="hover:text-trap transition">Rap/Trap</a>
+      <a href="#rage" class="hover:text-rage transition">Underground Rage</a>
+      <a href="#rnb" class="hover:text-rnb transition">R&amp;B</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="relative border-b border-surface2 overflow-hidden">
+  <div class="max-w-6xl mx-auto px-5 md:px-8 py-16 md:py-24">
+    <p class="font-mono text-xs uppercase tracking-[0.3em] text-tape mb-4">Now Streaming · 60-Second Previews</p>
+    <div class="max-w-lg mb-6">
+      <input type="text" id="search-input" placeholder="Search by title, genre, or BPM..."
+        class="w-full bg-surface border border-surface2 rounded-md py-3 pl-4 pr-10 text-bone placeholder-bonedim/50 focus:ring-2 focus:ring-tape focus:outline-none font-body">
+      <p class="font-mono text-[10px] text-bonedim/50 mt-2" id="search-result-count"></p>
+    </div>
+    <div class="flex items-center gap-3 font-mono text-xs text-bonedim/70">
+      <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tape animate-pulse"></span>PLAYER ARMED</span>
+      <span>·</span>
+      <span id="beat-count">0 BEATS LOADED</span>
+    </div>
+  </div>
+</section>
+
+<!-- GENRE SECTIONS -->
+<main class="max-w-6xl mx-auto px-5 md:px-8">
+  <section id="afrobeat" class="py-14 border-b border-surface2">
+    <div class="flex items-center gap-3 mb-8">
+      <span class="w-3 h-8 bg-afro rounded-sm"></span>
+      <h2 class="font-display text-3xl tracking-wide">AFROBEAT</h2>
+      <span class="font-mono text-xs text-bonedim/50 ml-auto" data-genre-count="afrobeat">0 tracks</span>
+    </div>
+    <div class="grid gap-4" data-genre-list="afrobeat"></div>
+    <button data-see-more="afrobeat" class="see-more-btn hidden mt-4 mx-auto block font-mono text-xs uppercase tracking-widest px-6 py-2 rounded border border-tape/30 text-tape hover:bg-tape/10 transition">See More</button>
+  </section>
+
+  <section id="trap" class="py-14 border-b border-surface2">
+    <div class="flex items-center gap-3 mb-8">
+      <span class="w-3 h-8 bg-trap rounded-sm"></span>
+      <h2 class="font-display text-3xl tracking-wide">RAP / TRAP</h2>
+      <span class="font-mono text-xs text-bonedim/50 ml-auto" data-genre-count="trap">0 tracks</span>
+    </div>
+    <div class="grid gap-4" data-genre-list="trap"></div>
+    <button data-see-more="trap" class="see-more-btn hidden mt-4 mx-auto block font-mono text-xs uppercase tracking-widest px-6 py-2 rounded border border-tape/30 text-tape hover:bg-tape/10 transition">See More</button>
+  </section>
+
+  <section id="rage" class="py-14 border-b border-surface2">
+    <div class="flex items-center gap-3 mb-8">
+      <span class="w-3 h-8 bg-rage rounded-sm"></span>
+      <h2 class="font-display text-3xl tracking-wide">UNDERGROUND RAGE</h2>
+      <span class="font-mono text-xs text-bonedim/50 ml-auto" data-genre-count="rage">0 tracks</span>
+    </div>
+    <div class="grid gap-4" data-genre-list="rage"></div>
+    <button data-see-more="rage" class="see-more-btn hidden mt-4 mx-auto block font-mono text-xs uppercase tracking-widest px-6 py-2 rounded border border-tape/30 text-tape hover:bg-tape/10 transition">See More</button>
+  </section>
+
+  <section id="rnb" class="py-14">
+    <div class="flex items-center gap-3 mb-8">
+      <span class="w-3 h-8 bg-rnb rounded-sm"></span>
+      <h2 class="font-display text-3xl tracking-wide">R&amp;B</h2>
+      <span class="font-mono text-xs text-bonedim/50 ml-auto" data-genre-count="rnb">0 tracks</span>
+    </div>
+    <div class="grid gap-4" data-genre-list="rnb"></div>
+    <button data-see-more="rnb" class="see-more-btn hidden mt-4 mx-auto block font-mono text-xs uppercase tracking-widest px-6 py-2 rounded border border-tape/30 text-tape hover:bg-tape/10 transition">See More</button>
+  </section>
+
+  <p id="empty-state" class="hidden text-center py-20 font-mono text-sm text-bonedim/50">
+    NO BEATS UPLOADED YET — CHECK BACK SOON
+  </p>
+</main>
+
+<footer class="border-t border-surface2 py-10 mt-10">
+  <div class="max-w-6xl mx-auto px-5 md:px-8 font-mono text-xs text-bonedim/40 flex flex-col md:flex-row justify-between gap-2">
+    <span>
+      © <span id="year"></span> Doctor Fresh. All rights reserved.<br>
+      <span class="text-bonedim/60">All beats are made and licensed by Doctor Fresh.</span>
+    </span>
+    <span>Previews limited to 60 seconds. Full files licensed on purchase.</span>
+  </div>
+</footer>
+
+<!-- BEAT CARD TEMPLATE -->
+<template id="beat-card-template">
+  <article class="beat-card group bg-surface border border-surface2 rounded-lg p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-4 hover:border-tape/40 transition">
+    <button class="play-btn shrink-0 w-12 h-12 rounded-full bg-surface2 border border-surface2 flex items-center justify-center hover:bg-tape/20 hover:border-tape transition focus-ring" aria-label="Play preview">
+      <svg class="play-icon w-4 h-4 text-bone" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="pause-icon w-4 h-4 text-bone hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+    </button>
+
+    <div class="flex-1 min-w-0">
+      <div class="flex items-baseline gap-3 flex-wrap">
+        <h3 class="beat-title font-display text-lg md:text-xl tracking-wide truncate"></h3>
+        <span class="beat-bpm font-mono text-xs text-bonedim/60"></span>
+        <span class="beat-key font-mono text-xs text-bonedim/60 ml-2"></span>
+      </div>
+      <div class="beat-price font-mono text-sm text-tape font-bold mt-1">₦<span class="price-value"></span></div>
+
+      <div class="mt-3 flex items-center gap-3">
+        <div class="eq-viz flex items-end gap-[2px] h-6 w-16 shrink-0">
+          <span class="eq-bar w-1 rounded-t bg-tape" style="animation: eqIdle 1s ease-in-out infinite; height:100%;"></span>
+          <span class="eq-bar w-1 rounded-t bg-tape" style="animation: eqIdle 1s ease-in-out infinite 0.1s; height:100%;"></span>
+          <span class="eq-bar w-1 rounded-t bg-tape" style="animation: eqIdle 1s ease-in-out infinite 0.2s; height:100%;"></span>
+          <span class="eq-bar w-1 rounded-t bg-tape" style="animation: eqIdle 1s ease-in-out infinite 0.3s; height:100%;"></span>
+          <span class="eq-bar w-1 rounded-t bg-tape" style="animation: eqIdle 1s ease-in-out infinite 0.4s; height:100%;"></span>
+        </div>
+        <div class="tape-track relative flex-1 h-1.5 rounded-full overflow-hidden bg-surface2">
+          <div class="progress-fill absolute inset-y-0 left-0 w-0 bg-tape rounded-full"></div>
+        </div>
+        <span class="time-readout font-mono text-[11px] text-bonedim/60 w-16 text-right">0:00 / 1:00</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 shrink-0">
+      <button class="share-btn font-mono text-[10px] uppercase tracking-widest px-3 py-2 rounded border border-bonedim/20 text-bonedim/60 hover:text-bone hover:border-tape/40 transition focus-ring" title="Share this beat">
+        <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.368-2.684 3 3 0 00-5.368 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+        </svg>
+        <span class="sr-only md:not-sr-only md:ml-1">Share</span>
+      </button>
+      <button class="buy-btn shrink-0 font-mono text-xs uppercase tracking-widest px-5 py-2.5 rounded-md bg-tape text-ink font-bold hover:bg-tape/90 transition focus-ring">
+        Buy
+      </button>
+    </div>
+  </article>
+</template>
+
+<!-- BUY MODAL -->
+<div id="buy-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-5">
+  <div id="buy-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+  <div class="relative bg-surface border border-surface2 rounded-xl w-full max-w-sm p-6">
+    <p class="font-mono text-xs uppercase tracking-widest text-bonedim/60 mb-1">Purchase Beat</p>
+    <h3 id="buy-modal-title" class="font-display text-2xl tracking-wide mb-6"></h3>
+    <div class="flex flex-col gap-3">
+      <a id="buy-whatsapp" href="#" target="_blank" rel="noopener" class="flex items-center justify-center gap-2 font-mono text-sm uppercase tracking-wider px-5 py-3 rounded-md bg-[#25D366] text-ink font-bold hover:opacity-90 transition focus-ring">
+        WhatsApp
+      </a>
+      <a id="buy-email" href="#" class="flex items-center justify-center gap-2 font-mono text-sm uppercase tracking-wider px-5 py-3 rounded-md bg-bone text-ink font-bold hover:opacity-90 transition focus-ring">
+        Email
+      </a>
+      <button id="buy-close" class="font-mono text-xs uppercase tracking-widest text-bonedim/50 hover:text-bonedim mt-2 focus-ring">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<audio id="player" preload="none" crossorigin="anonymous" class="hidden"></audio>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // 🔑 YOUR SUPABASE CREDENTIALS - ALREADY FILLED IN
+  const SUPABASE_URL = "https://dxfvzytpfohvhtjsdjokv.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4ZnZ6eXRmcG9odmh0c2pkb3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODM2MTUsImV4cCI6MjA5OTg1OTYxNX0.WbonRSoy9PmRq8UauGpA_UTM2Qs8ZBV0elJMbeigSyQ";
+
+  const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ==================== DOM REFS ====================
+  const searchInput = document.getElementById('search-input');
+  const searchResultCount = document.getElementById('search-result-count');
+  const emptyState = document.getElementById('empty-state');
+  const player = document.getElementById('player');
+  const modal = document.getElementById('buy-modal');
+  const modalTitle = document.getElementById('buy-modal-title');
+  const modalWhatsapp = document.getElementById('buy-whatsapp');
+  const modalEmail = document.getElementById('buy-email');
+  const modalClose = document.getElementById('buy-close');
+  const modalBackdrop = document.getElementById('buy-backdrop');
+
+  const genreMap = { afrobeat: 'afrobeat', trap: 'trap', rage: 'rage', rnb: 'rnb' };
+
+  let allBeats = [];
+  let filteredBeats = [];
+  let currentlyPlaying = null;
+  let expandedGenres = new Set();
+
+  // ==================== WATERMARK ====================
+  (function initWatermark() {
+    const track = document.getElementById('watermark-track');
+    const text = '●  PROD BY DOCTOR FRESH  ●  UNAUTHORIZED USE PROHIBITED  ●  ';
+    track.textContent = text.repeat(40);
+  })();
+
+  // ==================== FETCH BEATS ====================
+  async function fetchBeats() {
+    try {
+      const { data, error } = await supabase
+        .from('beats')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        emptyState.classList.remove('hidden');
+        return [];
+      }
+      emptyState.classList.add('hidden');
+      return data;
+    } catch (err) {
+      console.error('Supabase error:', err);
+      emptyState.textContent = '⚠️ Failed to load beats. Please refresh.';
+      emptyState.classList.remove('hidden');
+      return [];
+    }
+  }
+
+  // ==================== RENDER BEATS ====================
+  function renderBeats(beats) {
+    // Reset containers
+    Object.keys(genreMap).forEach(genre => {
+      const container = document.querySelector(`[data-genre-list="${genre}"]`);
+      if (container) container.innerHTML = '';
+      const countEl = document.querySelector(`[data-genre-count="${genre}"]`);
+      if (countEl) countEl.textContent = '0 tracks';
+      const seeMoreBtn = document.querySelector(`[data-see-more="${genre}"]`);
+      if (seeMoreBtn) {
+        seeMoreBtn.classList.add('hidden');
+        seeMoreBtn.textContent = 'See More';
+        const section = seeMoreBtn.closest('section');
+        if (section) section.classList.remove('genre-expanded');
+      }
+    });
+
+    if (!beats || beats.length === 0) {
+      document.querySelectorAll('[data-genre-count]').forEach(el => el.textContent = '0 tracks');
+      document.getElementById('beat-count').textContent = '0 BEATS LOADED';
+      emptyState.classList.remove('hidden');
+      return;
+    }
+    emptyState.classList.add('hidden');
+
+    let total = 0;
+    const template = document.getElementById('beat-card-template');
+
+    const grouped = {};
+    Object.keys(genreMap).forEach(g => grouped[g] = []);
+    beats.forEach(beat => {
+      const genre = beat.genre?.toLowerCase() || '';
+      if (grouped[genre]) grouped[genre].push(beat);
+    });
+
+    Object.keys(genreMap).forEach(genre => {
+      const beatsForGenre = grouped[genre] || [];
+      const container = document.querySelector(`[data-genre-list="${genre}"]`);
+      const seeMoreBtn = document.querySelector(`[data-see-more="${genre}"]`);
+      const section = seeMoreBtn?.closest('section');
+
+      if (!container) return;
+
+      beatsForGenre.forEach((beat, index) => {
+        const card = createBeatCard(beat);
+        if (index >= 5) card.classList.add('extra');
+        container.appendChild(card);
+        total++;
+      });
+
+      const countEl = document.querySelector(`[data-genre-count="${genre}"]`);
+      if (countEl) countEl.textContent = `${beatsForGenre.length} track${beatsForGenre.length !== 1 ? 's' : ''}`;
+
+      if (beatsForGenre.length > 5 && seeMoreBtn) {
+        seeMoreBtn.classList.remove('hidden');
+        seeMoreBtn.onclick = () => {
+          const isExpanded = expandedGenres.has(genre);
+          if (isExpanded) {
+            section?.classList.remove('genre-expanded');
+            seeMoreBtn.textContent = 'See More';
+            expandedGenres.delete(genre);
+          } else {
+            section?.classList.add('genre-expanded');
+            seeMoreBtn.textContent = 'See Less';
+            expandedGenres.add(genre);
+          }
+        };
+      }
+    });
+
+    document.getElementById('beat-count').textContent = `${total} BEAT${total !== 1 ? 'S' : ''} LOADED`;
+  }
+
+  // ==================== CREATE BEAT CARD ====================
+  function createBeatCard(beat) {
+    const template = document.getElementById('beat-card-template');
+    const card = template.content.cloneNode(true).firstElementChild;
+    card.dataset.beatId = beat.id;
+    card.dataset.genre = beat.genre?.toLowerCase() || '';
+
+    card.querySelector('.beat-title').textContent = beat.title || 'Untitled';
+    card.querySelector('.beat-bpm').textContent = beat.bpm ? `${beat.bpm} BPM` : '';
+    card.querySelector('.beat-key').textContent = beat.key ? `· ${beat.key}` : '';
+    const price = beat.price || 0;
+    card.querySelector('.price-value').textContent = price;
+
+    const audioUrl = beat.audio_url || '';
+    const playBtn = card.querySelector('.play-btn');
+    const playIcon = playBtn.querySelector('.play-icon');
+    const pauseIcon = playBtn.querySelector('.pause-icon');
+    const progressFill = card.querySelector('.progress-fill');
+    const timeReadout = card.querySelector('.time-readout');
+
+    let isPlaying = false;
+    let progressInterval = null;
+
+    function stopPlayback() {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+      player.pause();
+      player.currentTime = 0;
+      isPlaying = false;
+      playIcon.classList.remove('hidden');
+      pauseIcon.classList.add('hidden');
+      progressFill.style.width = '0%';
+      timeReadout.textContent = '0:00 / 1:00';
+      if (currentlyPlaying === beat.id) currentlyPlaying = null;
+    }
+
+    function startPlayback() {
+      document.querySelectorAll('.beat-card').forEach(c => {
+        if (c.dataset.beatId !== beat.id) {
+          const otherBtn = c.querySelector('.play-btn');
+          if (otherBtn) otherBtn.click();
+        }
+      });
+
+      if (!audioUrl) {
+        alert('Audio file missing.');
+        return;
+      }
+
+      if (currentlyPlaying === beat.id && !player.paused) return;
+      if (currentlyPlaying === beat.id && player.paused) {
+        player.play();
+        isPlaying = true;
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+        startProgressTimer();
+        return;
+      }
+
+      player.src = audioUrl;
+      player.load();
+      player.play()
+        .then(() => {
+          isPlaying = true;
+          playIcon.classList.add('hidden');
+          pauseIcon.classList.remove('hidden');
+          currentlyPlaying = beat.id;
+          startProgressTimer();
+        })
+        .catch(err => {
+          console.warn('Playback error:', err);
+          stopPlayback();
+        });
+    }
+
+    function startProgressTimer() {
+      if (progressInterval) clearInterval(progressInterval);
+      progressInterval = setInterval(() => {
+        const dur = player.duration || 60;
+        const current = player.currentTime;
+        const pct = (current / dur) * 100;
+        progressFill.style.width = `${Math.min(pct, 100)}%`;
+        const mins = Math.floor(current / 60);
+        const secs = Math.floor(current % 60);
+        timeReadout.textContent = `${mins}:${secs.toString().padStart(2, '0')} / 1:00`;
+        if (current >= 60) {
+          stopPlayback();
+        }
+      }, 250);
+    }
+
+    playBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isPlaying) stopPlayback();
+      else startPlayback();
+    });
+
+    // Buy button
+    card.querySelector('.buy-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openModal(beat);
+    });
+
+    // Share button
+    card.querySelector('.share-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      shareBeat(beat);
+    });
+
+    return card;
+  }
+
+  // ==================== SEARCH ====================
+  function applySearch(query) {
+    const q = query.toLowerCase().trim();
+    if (!q) {
+      filteredBeats = allBeats;
+      searchResultCount.textContent = '';
+    } else {
+      filteredBeats = allBeats.filter(beat => {
+        const title = (beat.title || '').toLowerCase();
+        const genre = (beat.genre || '').toLowerCase();
+        const bpm = beat.bpm ? beat.bpm.toString() : '';
+        return title.includes(q) || genre.includes(q) || bpm.includes(q);
+      });
+      searchResultCount.textContent = `Found ${filteredBeats.length} beat${filteredBeats.length !== 1 ? 's' : ''}`;
+    }
+    renderBeats(filteredBeats);
+  }
+
+  searchInput.addEventListener('input', (e) => applySearch(e.target.value));
+
+  // ==================== SHARE ====================
+  function shareBeat(beat) {
+    const url = window.location.href.split('?')[0];
+    const shareText = `Check out "${beat.title}" by Doctor Fresh — ₦${beat.price || 0}`;
+    if (navigator.share) {
+      navigator.share({ title: beat.title, text: shareText, url }).catch(() => {});
+    } else {
+      const fullText = `${shareText}\n${url}`;
+      navigator.clipboard.writeText(fullText).then(() => {
+        alert('Link copied to clipboard! Share it with your friends.');
+      }).catch(() => {
+        prompt('Copy this link:', fullText);
+      });
+    }
+  }
+
+  // ==================== BUY MODAL ====================
+  function openModal(beat) {
+    const price = beat.price || 0;
+    modalTitle.textContent = `${beat.title || 'Untitled'} — ₦${price}`;
+    const message = `Hi Doctor Fresh, I want to buy the beat "${beat.title}" for ₦${price}.`;
+    const subject = `Beat Purchase: ${beat.title}`;
+    modalWhatsapp.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    modalEmail.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  // ==================== ANTI-PIRACY ====================
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) || (e.ctrlKey && e.key === 'U')) {
+      e.preventDefault();
+    }
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && !player.paused) player.pause();
+  });
+
+  // ==================== INIT ====================
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  (async function init() {
+    allBeats = await fetchBeats();
+    filteredBeats = allBeats;
+    renderBeats(allBeats);
+  })();
+
+  player.addEventListener('ended', () => {
+    document.querySelectorAll('.beat-card').forEach(card => {
+      const playIcon = card.querySelector('.play-icon');
+      const pauseIcon = card.querySelector('.pause-icon');
+      playIcon.classList.remove('hidden');
+      pauseIcon.classList.add('hidden');
+      const fill = card.querySelector('.progress-fill');
+      if (fill) fill.style.width = '0%';
+      const time = card.querySelector('.time-readout');
+      if (time) time.textContent = '0:00 / 1:00';
+    });
+    currentlyPlaying = null;
+  });
+
+  // ==================== TRIPLE-TAP FOR ADMIN ====================
+  (function() {
+    const title = document.getElementById('site-title');
+    let clickCount = 0, timeout = null;
+    title.addEventListener('click', (e) => {
+      e.preventDefault();
+      clickCount++;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => { clickCount = 0; }, 600);
+      if (clickCount === 3) {
+        clickCount = 0;
+        clearTimeout(timeout);
+        window.location.href = 'admin.html';
+      }
+    });
+  })();
+</script>
+</body>
+</html>
