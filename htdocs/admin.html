@@ -55,10 +55,10 @@
         <label for="f-genre" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Genre *</label>
         <select id="f-genre" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" required>
           <option value="">Select genre</option>
-          <option value="Afrobeat">Afrobeat</option>
-          <option value="Rap/Trap">Rap/Trap</option>
-          <option value="Underground Rage">Underground Rage</option>
-          <option value="R&B">R&B</option>
+          <option value="afrobeat">Afrobeat</option>
+          <option value="trap">Rap/Trap</option>
+          <option value="rage">Underground Rage</option>
+          <option value="rnb">R&B</option>
         </select>
       </div>
       <div>
@@ -121,27 +121,18 @@
 
   <audio id="admin-player" class="hidden"></audio>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // ==================== SUPABASE CONFIG (same project as index.html) ====================
+    const SUPABASE_URL = "https://dxfvzytpfohvhtjsdjokv.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4ZnZ6eXRmcG9odmh0c2pkb3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODM2MTUsImV4cCI6MjA5OTg1OTYxNX0.WbonRSoy9PmRq8UauGpA_UTM2Qs8ZBV0elJMbeigSyQ";
+    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     // ==================== CLOUDINARY CONFIG ====================
     const CLOUDINARY = {
       cloudName: "dnch8f02w",
       uploadPreset: "beats_unsigned"
     };
-
-    // ==================== LOCAL STORAGE ====================
-    const STORAGE_KEY = 'doctorfresh_beats';
-
-    function loadBeats() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
-    }
-
-    function saveBeats(beats) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(beats));
-    }
-
-    function generateId() {
-      return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    }
 
     // ==================== DOM REFS ====================
     const listEl = document.getElementById('admin-beat-list');
@@ -149,9 +140,24 @@
     const template = document.getElementById('admin-row-template');
     const adminPlayer = document.getElementById('admin-player');
 
+    const GENRE_LABEL = { afrobeat:'Afrobeat', trap:'Rap/Trap', rage:'Underground Rage', rnb:'R&B' };
+
+    // ==================== FETCH BEATS FROM SUPABASE ====================
+    async function fetchBeats() {
+      const { data, error } = await supabase
+        .from('beats')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Supabase fetch error:', error);
+        return [];
+      }
+      return data || [];
+    }
+
     // ==================== RENDER ====================
-    function renderBeats() {
-      const beats = loadBeats();
+    async function renderBeats() {
+      const beats = await fetchBeats();
       listEl.innerHTML = '';
       if (beats.length === 0) {
         emptyEl.classList.remove('hidden');
@@ -172,7 +178,7 @@
         currentPlayingRow.querySelector('.pause-icon').classList.add('hidden');
       }
       if (isThisPlaying) { currentPlayingRow = null; return; }
-      adminPlayer.src = beat.audioUrl;
+      adminPlayer.src = beat.audio_url;
       adminPlayer.currentTime = 0;
       adminPlayer.play().catch(console.error);
       currentPlayingRow = row;
@@ -188,13 +194,12 @@
       currentPlayingRow = null;
     });
 
-    const GENRE_LABEL = { afrobeat:'Afrobeat', trap:'Rap/Trap', rage:'Underground Rage', rnb:'R&B' };
-
     function buildRow(beat) {
       const node = template.content.cloneNode(true);
       const row = node.querySelector('article');
       row.querySelector('.row-title').textContent = beat.title;
-      const meta = `${beat.genre} · ${beat.bpm ? beat.bpm + ' BPM' : 'BPM not set'}`;
+      const genreLabel = GENRE_LABEL[(beat.genre || '').toLowerCase()] || beat.genre;
+      const meta = `${genreLabel} · ${beat.bpm ? beat.bpm + ' BPM' : 'BPM not set'}`;
       row.querySelector('.row-meta').textContent = meta;
       row.querySelector('.row-price').textContent = beat.price ? `₦${beat.price}` : '';
       row.querySelector('.row-key').textContent = beat.key ? `· ${beat.key}` : '';
@@ -203,13 +208,15 @@
       playBtn.addEventListener('click', () => togglePlay(beat, row, playBtn));
 
       const downloadLink = row.querySelector('.row-download');
-      downloadLink.href = beat.audioUrl;
+      downloadLink.href = beat.audio_url;
 
-      row.querySelector('.row-delete').addEventListener('click', () => {
+      row.querySelector('.row-delete').addEventListener('click', async () => {
         if (!confirm(`Delete "${beat.title}"?`)) return;
-        let beats = loadBeats();
-        beats = beats.filter(b => b.id !== beat.id);
-        saveBeats(beats);
+        const { error } = await supabase.from('beats').delete().eq('id', beat.id);
+        if (error) {
+          alert('Delete failed: ' + error.message);
+          return;
+        }
         renderBeats();
       });
 
@@ -230,6 +237,20 @@
         xhr.onerror = () => reject(new Error('Network error'));
         xhr.send(fd);
       });
+    }
+
+    // ==================== SAVE BEAT TO SUPABASE ====================
+    async function saveBeatToSupabase(beat) {
+      const { data, error } = await supabase.from('beats').insert([{
+        title: beat.title,
+        bpm: beat.bpm,
+        genre: beat.genre,
+        price: beat.price,
+        key: beat.key,
+        audio_url: beat.audioUrl,
+      }]).select();
+      if (error) throw error;
+      return data;
     }
 
     // ==================== UPLOAD FORM ====================
@@ -270,20 +291,16 @@
         });
 
         const newBeat = {
-          id: generateId(),
           title,
           bpm,
           genre,
           price,
           key,
           audioUrl: result.secure_url,
-          createdAt: Date.now()
         };
 
-        const beats = loadBeats();
-        beats.unshift(newBeat);
-        saveBeats(beats);
-        renderBeats();
+        await saveBeatToSupabase(newBeat);
+        await renderBeats();
         uploadForm.reset();
         uploadSuccess.textContent = '✅ Beat uploaded successfully!';
         uploadSuccess.classList.remove('hidden');
