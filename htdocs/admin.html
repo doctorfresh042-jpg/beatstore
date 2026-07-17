@@ -123,7 +123,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // 🔑 YOUR SUPABASE CREDENTIALS - ALREADY FILLED IN
+    // ==================== YOUR SUPABASE CREDENTIALS ====================
     const SUPABASE_URL = "https://dxfvzytpfohvhtjsdjokv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4ZnZ6eXRmcG9odmh0c2pkb3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODM2MTUsImV4cCI6MjA5OTg1OTYxNX0.WbonRSoy9PmRq8UauGpA_UTM2Qs8ZBV0elJMbeigSyQ";
 
@@ -233,13 +233,11 @@
     async function deleteBeat(id, title, audioUrl) {
       if (!confirm(`Delete "${title}"?`)) return;
       try {
-        // Delete from storage if audio exists
         if (audioUrl) {
           const fileName = audioUrl.split('/').pop();
           await supabase.storage.from('beats').remove([fileName]);
         }
 
-        // Delete from database
         const { error } = await supabase
           .from('beats')
           .delete()
@@ -276,7 +274,6 @@
       progressWrap.classList.add('flex');
 
       try {
-        // 1. Upload file to Supabase Storage
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `public/${fileName}`;
@@ -287,13 +284,11 @@
 
         if (uploadError) throw uploadError;
 
-        // 2. Get public URL
         const { data: urlData } = supabase.storage
           .from('beats')
           .getPublicUrl(filePath);
         const audioUrl = urlData.publicUrl;
 
-        // 3. Save to database
         const { data, error } = await supabase
           .from('beats')
           .insert([
