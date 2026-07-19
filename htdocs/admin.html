@@ -215,10 +215,10 @@
       const row = node.querySelector('article');
       row.querySelector('.row-title').textContent = beat.title;
       const genreLabel = GENRE_LABEL[(beat.genre || '').toLowerCase()] || beat.genre;
-      const meta = `${genreLabel} · ${beat.bpm ? beat.bpm + ' BPM' : 'BPM not set'}`;
+      const meta = `${genreLabel} - ${beat.bpm ? beat.bpm + ' BPM' : 'BPM not set'}`;
       row.querySelector('.row-meta').textContent = meta;
-      row.querySelector('.row-price').textContent = beat.price ? `₦${beat.price}` : '';
-      row.querySelector('.row-key').textContent = beat.key ? `· ${beat.key}` : '';
+      row.querySelector('.row-price').textContent = beat.price ? ('NGN ' + beat.price) : '';
+      row.querySelector('.row-key').textContent = beat.key ? ('- ' + beat.key) : '';
 
       const playBtn = row.querySelector('.admin-play-btn');
       playBtn.addEventListener('click', () => togglePlay(beat, row, playBtn));
@@ -323,7 +323,7 @@
         dlog('Step 5: Supabase save succeeded!');
         await renderBeats();
         uploadForm.reset();
-        uploadSuccess.textContent = '✅ Beat uploaded successfully!';
+        uploadSuccess.textContent = 'Beat uploaded successfully!';
         uploadSuccess.classList.remove('hidden');
       } catch (err) {
         dlog('FAILED at some step: ' + err.message);
