@@ -123,9 +123,18 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // ==================== VISIBLE ERROR HANDLER (so errors show up without console) ====================
+    window.addEventListener('error', function(e) {
+      alert('PAGE ERROR: ' + e.message + ' (line ' + e.lineno + ')');
+    });
+
     // ==================== SUPABASE CONFIG (same project as index.html) ====================
     const SUPABASE_URL = "https://dxfvzytpfohvhtjsdjokv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4ZnZ6eXRmcG9odmh0c2pkb3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODM2MTUsImV4cCI6MjA5OTg1OTYxNX0.WbonRSoy9PmRq8UauGpA_UTM2Qs8ZBV0elJMbeigSyQ";
+
+    if (typeof supabaseJs === 'undefined') {
+      alert('ERROR: Supabase library did not load. Check your internet connection or ad-blocker.');
+    }
     const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // ==================== CLOUDINARY CONFIG ====================
@@ -264,6 +273,7 @@
 
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      alert('Step 1: Form submit caught, page will NOT refresh.');
       uploadError.classList.add('hidden');
       uploadSuccess.classList.add('hidden');
 
@@ -281,11 +291,15 @@
       try {
         let audioUrl = null;
         if (file) {
+          alert('Step 2: Uploading file to Cloudinary...');
           const result = await uploadToCloudinary(file, (pct) => {
             progressFill.style.width = pct + '%';
             progressPct.textContent = pct + '%';
           });
           audioUrl = result.secure_url;
+          alert('Step 3: Cloudinary upload succeeded. URL: ' + audioUrl);
+        } else {
+          alert('Step 2: No audio file selected, skipping Cloudinary.');
         }
 
         const newBeat = {
@@ -297,12 +311,15 @@
           audioUrl,
         };
 
+        alert('Step 4: Saving to Supabase...');
         await saveBeatToSupabase(newBeat);
+        alert('Step 5: Supabase save succeeded!');
         await renderBeats();
         uploadForm.reset();
         uploadSuccess.textContent = '✅ Beat uploaded successfully!';
         uploadSuccess.classList.remove('hidden');
       } catch (err) {
+        alert('FAILED at some step: ' + err.message);
         uploadError.textContent = 'Upload failed: ' + err.message;
         uploadError.classList.remove('hidden');
       } finally {
