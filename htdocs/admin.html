@@ -121,30 +121,16 @@
 
   <audio id="admin-player" class="hidden"></audio>
 
-  <div id="debug-log" style="position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;background:#000;color:#0f0;font-family:monospace;font-size:11px;padding:10px;z-index:9999;white-space:pre-wrap;border-top:2px solid #0f0;">DEBUG LOG (page just loaded)</div>
-
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <script>eruda.init();</script>
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    const debugLog = document.getElementById('debug-log');
-    function dlog(msg) {
-      debugLog.textContent += '\n' + msg;
-      debugLog.scrollTop = debugLog.scrollHeight;
-    }
-    dlog('Inline script started running.');
-
-    window.addEventListener('error', function(e) {
-      dlog('PAGE ERROR: ' + e.message + ' (line ' + e.lineno + ')');
-    });
-
     // ==================== SUPABASE CONFIG ====================
     const SUPABASE_URL = "https://dxfvzytpfohvhtjsdjokv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4ZnZ6eXRmcG9odmh0c2pkb3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODM2MTUsImV4cCI6MjA5OTg1OTYxNX0.WbonRSoy9PmRq8UauGpA_UTM2Qs8ZBV0elJMbeigSyQ";
 
-    dlog('Checking if supabaseJs library loaded: ' + (typeof supabaseJs));
-    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    dlog('Supabase client created OK.');
+    // Use window.supabase (global from CDN) – avoids any naming conflict
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // ==================== DOM REFS ====================
     const listEl = document.getElementById('admin-beat-list');
@@ -154,14 +140,14 @@
 
     const GENRE_LABEL = { afrobeat:'Afrobeat', trap:'Rap/Trap', rage:'Underground Rage', rnb:'R&B' };
 
-    // ==================== FETCH BEATS FROM SUPABASE ====================
+    // ==================== FETCH BEATS ====================
     async function fetchBeats() {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('beats')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) {
-        console.error('Supabase fetch error:', error);
+        console.error('Fetch error:', error);
         return [];
       }
       return data || [];
@@ -224,7 +210,7 @@
 
       row.querySelector('.row-delete').addEventListener('click', async () => {
         if (!confirm(`Delete "${beat.title}"?`)) return;
-        const { error } = await supabase.from('beats').delete().eq('id', beat.id);
+        const { error } = await supabaseClient.from('beats').delete().eq('id', beat.id);
         if (error) {
           alert('Delete failed: ' + error.message);
           return;
@@ -237,41 +223,32 @@
 
     // ==================== UPLOAD TO SUPABASE STORAGE ====================
     async function uploadToSupabaseStorage(file, onProgress) {
-      // Generate a unique file path inside the 'beats' bucket
       const timestamp = Date.now();
       const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
       const path = `beats/${timestamp}_${safeName}`;
 
-      // Simulate progress because fetch doesn't support upload progress
       onProgress(30);
-      dlog('Starting upload to Supabase Storage: ' + path);
 
-      const { data, error } = await supabase.storage
+      const { data, error } = await supabaseClient.storage
         .from('beats')
         .upload(path, file, {
           cacheControl: '3600',
           upsert: false,
         });
 
-      if (error) {
-        dlog('Storage upload error: ' + error.message);
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
-      dlog('Upload succeeded, getting public URL...');
-      const { data: publicUrlData } = supabase.storage
+      const { data: publicUrlData } = supabaseClient.storage
         .from('beats')
         .getPublicUrl(path);
 
-      const publicUrl = publicUrlData.publicUrl;
-      dlog('Public URL: ' + publicUrl);
       onProgress(100);
-      return publicUrl;
+      return publicUrlData.publicUrl;
     }
 
-    // ==================== SAVE BEAT TO SUPABASE ====================
+    // ==================== SAVE BEAT TO DB ====================
     async function saveBeatToSupabase(beat) {
-      const { data, error } = await supabase.from('beats').insert([{
+      const { data, error } = await supabaseClient.from('beats').insert([{
         title: beat.title,
         bpm: beat.bpm,
         genre: beat.genre,
@@ -283,7 +260,7 @@
       return data;
     }
 
-    // ==================== UPLOAD FORM ====================
+    // ==================== UPLOAD FORM HANDLER ====================
     const uploadForm = document.getElementById('upload-form');
     const uploadBtn = document.getElementById('upload-submit-btn');
     const progressWrap = document.getElementById('upload-progress-wrap');
@@ -294,7 +271,6 @@
 
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      dlog('Form submit caught.');
       uploadError.classList.add('hidden');
       uploadSuccess.classList.add('hidden');
 
@@ -316,13 +292,10 @@
       progressWrap.classList.add('flex');
 
       try {
-        let audioUrl = null;
-        dlog('Step 1: Uploading file to Supabase Storage...');
-        audioUrl = await uploadToSupabaseStorage(file, (pct) => {
+        const audioUrl = await uploadToSupabaseStorage(file, (pct) => {
           progressFill.style.width = pct + '%';
           progressPct.textContent = pct + '%';
         });
-        dlog('Step 2: Upload complete, URL: ' + audioUrl);
 
         const newBeat = {
           title: title || 'Untitled',
@@ -332,16 +305,13 @@
           key,
           audioUrl,
         };
-
-        dlog('Step 3: Saving to Supabase DB...');
         await saveBeatToSupabase(newBeat);
-        dlog('Step 4: DB save succeeded!');
+
         await renderBeats();
         uploadForm.reset();
         uploadSuccess.textContent = 'Beat uploaded successfully!';
         uploadSuccess.classList.remove('hidden');
       } catch (err) {
-        dlog('FAILED: ' + err.message);
         uploadError.textContent = 'Upload failed: ' + err.message;
         uploadError.classList.remove('hidden');
       } finally {
@@ -354,8 +324,7 @@
     });
 
     // ==================== INIT ====================
-    dlog('Script fully loaded. Calling renderBeats()...');
-    renderBeats().then(() => dlog('renderBeats() finished.')).catch(err => dlog('renderBeats() failed: ' + err.message));
+    renderBeats();
   </script>
 </body>
 </html>
