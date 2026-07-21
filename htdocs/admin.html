@@ -5,55 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Doctor Fresh</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            ink: "#0E0D0C",
-            surface: "#1A1816",
-            surface2: "#221F1C",
-            bone: "#F2EFE9",
-            bonedim: "#B8B2A7",
-            tape: "#FF4D00",
-          },
-          fontFamily: {
-            display: ["Anton", "sans-serif"],
-            body: ["Inter", "sans-serif"],
-            mono: ["'JetBrains Mono'", "monospace"],
-          },
-        },
-      },
-    };
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     body { background: #0E0D0C; color: #F2EFE9; font-family: 'Inter', sans-serif; }
+    .error-box { background: #ff000020; border: 1px solid #ff4444; padding: 10px; border-radius: 8px; color: #ff6666; margin-top: 10px; white-space: pre-wrap; }
+    .success-box { background: #00ff0020; border: 1px solid #44ff44; padding: 10px; border-radius: 8px; color: #66ff66; margin-top: 10px; }
+    .info-box { background: #0000ff20; border: 1px solid #4444ff; padding: 10px; border-radius: 8px; color: #6666ff; margin-top: 10px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col p-5 max-w-6xl mx-auto">
 
-  <header class="border-b border-surface2 pb-4 flex items-center justify-between">
-    <h1 class="font-display text-2xl tracking-wide">PROD BY <span class="text-tape">DOCTOR FRESH</span></h1>
-    <span class="font-mono text-xs text-bonedim/50">Admin</span>
+  <header class="border-b border-gray-700 pb-4 flex items-center justify-between">
+    <h1 class="text-2xl font-bold tracking-wide">PROD BY <span style="color:#FF4D00;">DOCTOR FRESH</span></h1>
+    <span class="text-xs text-gray-400">Admin</span>
   </header>
 
+  <!-- Diagnostic banner -->
+  <div id="diagnostic" class="mt-4 p-3 border border-gray-600 rounded-lg bg-gray-900 text-sm">
+    <strong>🔍 Diagnostic:</strong> <span id="diagnostic-text">Checking connection...</span>
+  </div>
+
   <!-- Upload Form -->
-  <section class="mt-6 bg-surface border border-surface2 rounded-xl p-5">
-    <h2 class="font-display text-xl tracking-wide">Upload New Beat</h2>
+  <section class="mt-6 bg-gray-800 border border-gray-700 rounded-xl p-5">
+    <h2 class="text-xl font-bold">Upload New Beat</h2>
     <form id="upload-form" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <label for="f-title" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Title</label>
-        <input type="text" id="f-title" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
+        <label class="block text-xs uppercase text-gray-400">Title</label>
+        <input type="text" id="f-title" class="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-1 focus:ring-orange-500 focus:outline-none" />
       </div>
       <div>
-        <label for="f-bpm" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">BPM (optional)</label>
-        <input type="number" id="f-bpm" step="0.1" placeholder="120" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
+        <label class="block text-xs uppercase text-gray-400">BPM (optional)</label>
+        <input type="number" id="f-bpm" step="0.1" placeholder="120" class="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-1 focus:ring-orange-500 focus:outline-none" />
       </div>
       <div>
-        <label for="f-genre" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Genre</label>
-        <select id="f-genre" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none">
+        <label class="block text-xs uppercase text-gray-400">Genre</label>
+        <select id="f-genre" class="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-1 focus:ring-orange-500 focus:outline-none">
           <option value="">Select genre</option>
           <option value="afrobeat">Afrobeat</option>
           <option value="trap">Rap/Trap</option>
@@ -62,116 +48,166 @@
         </select>
       </div>
       <div>
-        <label for="f-price" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Price (₦)</label>
-        <input type="number" id="f-price" placeholder="5000" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
+        <label class="block text-xs uppercase text-gray-400">Price (₦)</label>
+        <input type="number" id="f-price" placeholder="5000" class="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-1 focus:ring-orange-500 focus:outline-none" />
       </div>
       <div>
-        <label for="f-key" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Key (optional)</label>
-        <input type="text" id="f-key" placeholder="C#m, F, Am" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
+        <label class="block text-xs uppercase text-gray-400">Key (optional)</label>
+        <input type="text" id="f-key" placeholder="C#m, F, Am" class="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-1 focus:ring-orange-500 focus:outline-none" />
       </div>
       <div class="md:col-span-2">
-        <label for="f-audio" class="block font-mono text-xs uppercase tracking-widest text-bonedim/60">Audio File (MP3 / WAV)</label>
-        <input type="file" id="f-audio" accept="audio/*" class="w-full bg-surface2 border border-surface2 rounded-md px-4 py-2 text-bone focus:ring-1 focus:ring-tape focus:outline-none" />
+        <label class="block text-xs uppercase text-gray-400">Audio File (MP3 / WAV)</label>
+        <input type="file" id="f-audio" accept="audio/*" class="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-1 focus:ring-orange-500 focus:outline-none" />
       </div>
       <div class="md:col-span-2 flex items-center gap-4">
-        <button type="submit" id="upload-submit-btn" class="font-mono text-sm uppercase tracking-widest px-6 py-2.5 rounded-md bg-tape text-ink font-bold hover:bg-tape/90 transition focus-ring">
+        <button type="submit" id="upload-submit-btn" class="font-bold text-sm uppercase px-6 py-2.5 rounded-md bg-orange-500 text-black hover:bg-orange-400 transition">
           Upload Beat
         </button>
         <div id="upload-progress-wrap" class="hidden flex-1 items-center gap-3">
-          <div class="flex-1 h-2 bg-surface2 rounded-full overflow-hidden">
-            <div id="upload-progress-fill" class="h-full bg-tape transition-all duration-300" style="width:0%"></div>
+          <div class="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div id="upload-progress-fill" class="h-full bg-orange-500 transition-all duration-300" style="width:0%"></div>
           </div>
-          <span id="upload-progress-pct" class="font-mono text-xs text-bonedim/60">0%</span>
+          <span id="upload-progress-pct" class="text-xs text-gray-400">0%</span>
         </div>
       </div>
-      <p id="upload-error" class="md:col-span-2 text-tape text-sm hidden"></p>
-      <p id="upload-success" class="md:col-span-2 text-green-500 text-sm hidden"></p>
+      <div id="status-box" class="md:col-span-2 mt-2"></div>
     </form>
   </section>
 
   <!-- Manage Beats -->
   <section class="mt-8 flex-1">
-    <div class="flex items-center justify-between border-b border-surface2 pb-2">
-      <h2 class="font-display text-xl tracking-wide">Manage Beats</h2>
-      <span id="admin-empty" class="font-mono text-xs text-bonedim/50">No beats uploaded yet</span>
+    <div class="flex items-center justify-between border-b border-gray-700 pb-2">
+      <h2 class="text-xl font-bold">Manage Beats</h2>
+      <span id="admin-empty" class="text-xs text-gray-400">No beats uploaded yet</span>
     </div>
     <div id="admin-beat-list" class="mt-4 space-y-3"></div>
   </section>
 
   <template id="admin-row-template">
-    <article class="bg-surface border border-surface2 rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-4">
+    <article class="bg-gray-800 border border-gray-700 rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-4">
       <div class="flex-1 min-w-0">
         <div class="flex items-baseline gap-3 flex-wrap">
-          <h3 class="row-title font-display text-lg tracking-wide truncate"></h3>
-          <span class="row-meta font-mono text-xs text-bonedim/60"></span>
-          <span class="row-price font-mono text-sm text-tape font-bold"></span>
-          <span class="row-key font-mono text-xs text-bonedim/60"></span>
+          <h3 class="row-title font-bold text-lg truncate"></h3>
+          <span class="row-meta text-xs text-gray-400"></span>
+          <span class="row-price text-sm text-orange-500 font-bold"></span>
+          <span class="row-key text-xs text-gray-400"></span>
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <button class="admin-play-btn w-9 h-9 rounded-full bg-surface2 border border-surface2 flex items-center justify-center hover:bg-tape/20 hover:border-tape transition focus-ring">
-          <svg class="play-icon w-3 h-3 text-bone" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          <svg class="pause-icon w-3 h-3 text-bone hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+        <button class="admin-play-btn w-9 h-9 rounded-full bg-gray-700 border border-gray-600 flex items-center justify-center hover:bg-gray-600 transition">
+          <svg class="play-icon w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="pause-icon w-3 h-3 text-white hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
         </button>
-        <a class="row-download font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border border-bonedim/20 text-bonedim/60 hover:text-bone hover:border-tape/40 transition" download>DL</a>
-        <button class="row-delete font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border border-tape/30 text-tape/60 hover:text-tape hover:border-tape transition">Delete</button>
+        <a class="row-download text-xs uppercase px-3 py-1.5 rounded border border-gray-600 text-gray-400 hover:text-white hover:border-orange-500 transition" download>DL</a>
+        <button class="row-delete text-xs uppercase px-3 py-1.5 rounded border border-red-700 text-red-400 hover:text-red-300 hover:border-red-500 transition">Delete</button>
       </div>
     </article>
   </template>
 
   <audio id="admin-player" class="hidden"></audio>
 
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    // ========== CONFIG ==========
+    // ============================================================
+    //  CONFIG
+    // ============================================================
     const SUPABASE_URL = "https://dxfvzytpfohvhtjsdjokv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4ZnZ6eXRmcG9odmh0c2pkb3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODM2MTUsImV4cCI6MjA5OTg1OTYxNX0.WbonRSoy9PmRq8UauGpA_UTM2Qs8ZBV0elJMbeigSyQ";
-    const BUCKET_NAME = "beats"; // CHANGE THIS IF YOUR BUCKET HAS A DIFFERENT NAME
 
-    // ========== REST API HELPERS ==========
-    const headers = {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-    };
-
-    async function restFetch(endpoint, options = {}) {
-      const url = SUPABASE_URL + endpoint;
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          ...headers,
-          ...(options.headers || {}),
-        },
-      });
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`HTTP ${response.status}: ${text}`);
-      }
-      return response.json();
+    // ============================================================
+    //  INIT SUPABASE CLIENT
+    // ============================================================
+    let supabaseClient;
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('✅ Supabase client created.');
+    } catch (err) {
+      console.error('❌ Client creation error:', err);
+      document.getElementById('diagnostic-text').innerHTML = `❌ Client error: ${err.message}`;
     }
 
-    // ========== DOM REFS ==========
+    // ============================================================
+    //  DOM REFS
+    // ============================================================
     const listEl = document.getElementById('admin-beat-list');
     const emptyEl = document.getElementById('admin-empty');
     const template = document.getElementById('admin-row-template');
     const adminPlayer = document.getElementById('admin-player');
-    const uploadError = document.getElementById('upload-error');
-    const uploadSuccess = document.getElementById('upload-success');
+    const statusBox = document.getElementById('status-box');
+    const form = document.getElementById('upload-form');
+    const uploadBtn = document.getElementById('upload-submit-btn');
+    const progressWrap = document.getElementById('upload-progress-wrap');
+    const progressFill = document.getElementById('upload-progress-fill');
+    const progressPct = document.getElementById('upload-progress-pct');
+    const diagnosticText = document.getElementById('diagnostic-text');
 
     const GENRE_LABEL = { afrobeat:'Afrobeat', trap:'Rap/Trap', rage:'Underground Rage', rnb:'R&B' };
 
-    // ========== FETCH BEATS ==========
+    // ============================================================
+    //  HELPERS
+    // ============================================================
+    function showStatus(msg, isError = true) {
+      statusBox.innerHTML = `<div class="${isError ? 'error-box' : 'success-box'}">${msg}</div>`;
+      if (isError) console.error(msg);
+      else console.log(msg);
+    }
+
+    function updateDiagnostic(msg, isError = false) {
+      diagnosticText.innerHTML = msg;
+      if (isError) console.error('🔍 Diagnostic:', msg);
+      else console.log('🔍 Diagnostic:', msg);
+    }
+
+    // ============================================================
+    //  CONNECTION TEST (runs on load)
+    // ============================================================
+    async function testConnection() {
+      try {
+        updateDiagnostic('⏳ Testing connection to Supabase...');
+        const { data, error } = await supabaseClient.from('beats').select('count', { count: 'exact', head: true });
+        if (error) throw error;
+        updateDiagnostic('✅ Connected to Supabase successfully.', false);
+      } catch (err) {
+        console.error('Connection test error:', err);
+        // Check if it's a network error
+        if (err.message && (err.message.includes('fetch') || err.message.includes('NetworkError'))) {
+          updateDiagnostic('❌ NETWORK ERROR: Cannot reach Supabase. Your hosting may block outbound HTTPS requests to this domain.', true);
+          showStatus('❌ Network error: please check your hosting provider allows outbound HTTPS to dxfvzytpfohvhtjsdjokv.supabase.co', true);
+        } else {
+          updateDiagnostic('❌ Connection test failed: ' + err.message, true);
+          showStatus('❌ Connection error: ' + err.message, true);
+        }
+      }
+    }
+
+    // ============================================================
+    //  FETCH BEATS
+    // ============================================================
     async function fetchBeats() {
       try {
-        const data = await restFetch('/rest/v1/beats?select=*&order=created_at.desc');
+        console.log('🔍 Fetching beats...');
+        const { data, error } = await supabaseClient
+          .from('beats')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        console.log(`✅ Fetched ${data.length} beats.`);
         return data || [];
       } catch (err) {
-        console.error('Fetch beats error:', err);
+        console.error('❌ Fetch beats error:', err);
+        // Only show if not already shown by diagnostic
+        if (!statusBox.innerHTML) {
+          showStatus('❌ Failed to fetch beats: ' + err.message, true);
+        }
         return [];
       }
     }
 
-    // ========== RENDER ==========
+    // ============================================================
+    //  RENDER BEATS
+    // ============================================================
     async function renderBeats() {
       const beats = await fetchBeats();
       listEl.innerHTML = '';
@@ -183,7 +219,9 @@
       beats.forEach(beat => listEl.appendChild(buildRow(beat)));
     }
 
-    // ========== ROW ==========
+    // ============================================================
+    //  BUILD ROW
+    // ============================================================
     let currentPlayingRow = null;
 
     function togglePlay(beat, row, btn) {
@@ -193,10 +231,13 @@
         currentPlayingRow.querySelector('.play-icon').classList.remove('hidden');
         currentPlayingRow.querySelector('.pause-icon').classList.add('hidden');
       }
-      if (isThisPlaying) { currentPlayingRow = null; return; }
+      if (isThisPlaying) {
+        currentPlayingRow = null;
+        return;
+      }
       adminPlayer.src = beat.audio_url;
       adminPlayer.currentTime = 0;
-      adminPlayer.play().catch(console.error);
+      adminPlayer.play().catch(err => console.error('Play error:', err));
       currentPlayingRow = row;
       btn.querySelector('.play-icon').classList.add('hidden');
       btn.querySelector('.pause-icon').classList.remove('hidden');
@@ -229,9 +270,13 @@
       row.querySelector('.row-delete').addEventListener('click', async () => {
         if (!confirm(`Delete "${beat.title}"?`)) return;
         try {
-          await restFetch('/rest/v1/beats?id=eq.' + beat.id, { method: 'DELETE' });
+          console.log(`🗑️ Deleting beat ${beat.id}...`);
+          const { error } = await supabaseClient.from('beats').delete().eq('id', beat.id);
+          if (error) throw error;
+          console.log('✅ Deleted.');
           renderBeats();
         } catch (err) {
+          console.error('❌ Delete error:', err);
           alert('Delete failed: ' + err.message);
         }
       });
@@ -239,77 +284,72 @@
       return row;
     }
 
-    // ========== UPLOAD TO STORAGE ==========
+    // ============================================================
+    //  UPLOAD TO STORAGE
+    // ============================================================
     async function uploadToSupabaseStorage(file, onProgress) {
       const timestamp = Date.now();
       const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-      const path = `${timestamp}_${safeName}`;
+      const path = `beats/${timestamp}_${safeName}`;
 
-      const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET_NAME}/${path}`;
-      const uploadHeaders = {
-        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-        'apikey': SUPABASE_ANON_KEY,
-      };
-
-      // Simulate progress (fetch doesn't support upload progress)
+      console.log(`📤 Uploading to storage: ${path}`);
       onProgress(30);
 
-      const response = await fetch(url, {
-        method: 'POST',
-        body: file,
-        headers: uploadHeaders,
-      });
+      const { data, error } = await supabaseClient.storage
+        .from('beats')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`HTTP ${response.status}: ${text}`);
+      if (error) {
+        console.error('❌ Storage upload error:', error);
+        throw error;
       }
 
+      console.log('✅ Storage upload successful.');
+      const { data: publicUrlData } = supabaseClient.storage
+        .from('beats')
+        .getPublicUrl(path);
+
       onProgress(100);
-      // Construct public URL
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${path}`;
-      return publicUrl;
+      return publicUrlData.publicUrl;
     }
 
-    // ========== SAVE BEAT TO DB ==========
+    // ============================================================
+    //  SAVE BEAT TO DB
+    // ============================================================
     async function saveBeatToSupabase(beat) {
-      const data = await restFetch('/rest/v1/beats', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: beat.title,
-          bpm: beat.bpm,
-          genre: beat.genre,
-          price: beat.price,
-          key: beat.key,
-          audio_url: beat.audioUrl,
-        }),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      console.log('💾 Saving beat to database...');
+      const { data, error } = await supabaseClient.from('beats').insert([{
+        title: beat.title,
+        bpm: beat.bpm,
+        genre: beat.genre,
+        price: beat.price,
+        key: beat.key,
+        audio_url: beat.audioUrl,
+      }]).select();
+      if (error) throw error;
+      console.log('✅ Beat saved.');
       return data;
     }
 
-    // ========== FORM HANDLER ==========
-    const uploadForm = document.getElementById('upload-form');
-    const uploadBtn = document.getElementById('upload-submit-btn');
-    const progressWrap = document.getElementById('upload-progress-wrap');
-    const progressFill = document.getElementById('upload-progress-fill');
-    const progressPct = document.getElementById('upload-progress-pct');
-
-    uploadForm.addEventListener('submit', async (e) => {
+    // ============================================================
+    //  FORM SUBMIT
+    // ============================================================
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      uploadError.classList.add('hidden');
-      uploadSuccess.classList.add('hidden');
+      statusBox.innerHTML = ''; // clear
 
-      const title = document.getElementById('f-title').value.trim();
+      const title = document.getElementById('f-title').value.trim() || 'Untitled';
       const bpm = document.getElementById('f-bpm').value ? Number(document.getElementById('f-bpm').value) : null;
-      const genre = document.getElementById('f-genre').value;
-      const price = Number(document.getElementById('f-price').value);
+      const genre = document.getElementById('f-genre').value || null;
+      const price = Number(document.getElementById('f-price').value) || 0;
       const key = document.getElementById('f-key').value.trim() || null;
       const file = document.getElementById('f-audio').files[0];
 
       if (!file) {
-        uploadError.textContent = 'Please select an audio file.';
-        uploadError.classList.remove('hidden');
+        showStatus('Please select an audio file.', true);
         return;
       }
 
@@ -323,24 +363,15 @@
           progressPct.textContent = pct + '%';
         });
 
-        const newBeat = {
-          title: title || 'Untitled',
-          bpm,
-          genre: genre || null,
-          price: price || 0,
-          key,
-          audioUrl,
-        };
+        const newBeat = { title, bpm, genre, price, key, audioUrl };
         await saveBeatToSupabase(newBeat);
 
+        showStatus('✅ Beat uploaded successfully!', false);
+        form.reset();
         await renderBeats();
-        uploadForm.reset();
-        uploadSuccess.textContent = 'Beat uploaded successfully!';
-        uploadSuccess.classList.remove('hidden');
       } catch (err) {
-        console.error('Upload error:', err);
-        uploadError.textContent = 'Upload failed: ' + err.message;
-        uploadError.classList.remove('hidden');
+        console.error('❌ Upload error:', err);
+        showStatus('❌ Upload failed: ' + err.message, true);
       } finally {
         uploadBtn.disabled = false;
         progressWrap.classList.add('hidden');
@@ -350,14 +381,11 @@
       }
     });
 
-    // ========== INIT ==========
+    // ============================================================
+    //  INIT
+    // ============================================================
     renderBeats();
-
-    // ========== CONSOLE TEST ==========
-    console.log('✅ Admin ready. To test upload manually, select a file and run:');
-    console.log('  const file = document.getElementById("f-audio").files[0];');
-    console.log('  uploadToSupabaseStorage(file, p => console.log(p+"%")).then(console.log).catch(console.error);');
-    window.uploadToSupabaseStorage = uploadToSupabaseStorage;
+    testConnection();
   </script>
 </body>
 </html>
