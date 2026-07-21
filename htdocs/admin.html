@@ -138,19 +138,13 @@
       dlog('PAGE ERROR: ' + e.message + ' (line ' + e.lineno + ')');
     });
 
-    // ==================== SUPABASE CONFIG (same project as index.html) ====================
+    // ==================== SUPABASE CONFIG ====================
     const SUPABASE_URL = "https://dxfvzytpfohvhtjsdjokv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4ZnZ6eXRmcG9odmh0c2pkb3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODM2MTUsImV4cCI6MjA5OTg1OTYxNX0.WbonRSoy9PmRq8UauGpA_UTM2Qs8ZBV0elJMbeigSyQ";
 
     dlog('Checking if supabaseJs library loaded: ' + (typeof supabaseJs));
     const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     dlog('Supabase client created OK.');
-
-    // ==================== CLOUDINARY CONFIG ====================
-    const CLOUDINARY = {
-      cloudName: "dnch8f02w",
-      uploadPreset: "beats_unsigned"
-    };
 
     // ==================== DOM REFS ====================
     const listEl = document.getElementById('admin-beat-list');
@@ -241,20 +235,38 @@
       return row;
     }
 
-    // ==================== UPLOAD TO CLOUDINARY ====================
-    function uploadToCloudinary(file, onProgress) {
-      return new Promise((resolve, reject) => {
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('upload_preset', CLOUDINARY.uploadPreset);
-        fd.append('folder', 'beats');
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/video/upload`);
-        xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100)); };
-        xhr.onload = () => { if (xhr.status>=200 && xhr.status<300) resolve(JSON.parse(xhr.responseText)); else reject(new Error(xhr.statusText)); };
-        xhr.onerror = () => reject(new Error('Network error'));
-        xhr.send(fd);
-      });
+    // ==================== UPLOAD TO SUPABASE STORAGE ====================
+    async function uploadToSupabaseStorage(file, onProgress) {
+      // Generate a unique file path inside the 'beats' bucket
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const path = `beats/${timestamp}_${safeName}`;
+
+      // Simulate progress because fetch doesn't support upload progress
+      onProgress(30);
+      dlog('Starting upload to Supabase Storage: ' + path);
+
+      const { data, error } = await supabase.storage
+        .from('beats')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        dlog('Storage upload error: ' + error.message);
+        throw new Error(error.message);
+      }
+
+      dlog('Upload succeeded, getting public URL...');
+      const { data: publicUrlData } = supabase.storage
+        .from('beats')
+        .getPublicUrl(path);
+
+      const publicUrl = publicUrlData.publicUrl;
+      dlog('Public URL: ' + publicUrl);
+      onProgress(100);
+      return publicUrl;
     }
 
     // ==================== SAVE BEAT TO SUPABASE ====================
@@ -282,7 +294,7 @@
 
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      dlog('Step 1: Form submit caught, page will NOT refresh.');
+      dlog('Form submit caught.');
       uploadError.classList.add('hidden');
       uploadSuccess.classList.add('hidden');
 
@@ -293,23 +305,24 @@
       const key = document.getElementById('f-key').value.trim() || null;
       const file = document.getElementById('f-audio').files[0];
 
+      if (!file) {
+        uploadError.textContent = 'Please select an audio file.';
+        uploadError.classList.remove('hidden');
+        return;
+      }
+
       uploadBtn.disabled = true;
       progressWrap.classList.remove('hidden');
       progressWrap.classList.add('flex');
 
       try {
         let audioUrl = null;
-        if (file) {
-          dlog('Step 2: Uploading file to Cloudinary...');
-          const result = await uploadToCloudinary(file, (pct) => {
-            progressFill.style.width = pct + '%';
-            progressPct.textContent = pct + '%';
-          });
-          audioUrl = result.secure_url;
-          dlog('Step 3: Cloudinary upload succeeded. URL: ' + audioUrl);
-        } else {
-          dlog('Step 2: No audio file selected, skipping Cloudinary.');
-        }
+        dlog('Step 1: Uploading file to Supabase Storage...');
+        audioUrl = await uploadToSupabaseStorage(file, (pct) => {
+          progressFill.style.width = pct + '%';
+          progressPct.textContent = pct + '%';
+        });
+        dlog('Step 2: Upload complete, URL: ' + audioUrl);
 
         const newBeat = {
           title: title || 'Untitled',
@@ -320,15 +333,15 @@
           audioUrl,
         };
 
-        dlog('Step 4: Saving to Supabase...');
+        dlog('Step 3: Saving to Supabase DB...');
         await saveBeatToSupabase(newBeat);
-        dlog('Step 5: Supabase save succeeded!');
+        dlog('Step 4: DB save succeeded!');
         await renderBeats();
         uploadForm.reset();
         uploadSuccess.textContent = 'Beat uploaded successfully!';
         uploadSuccess.classList.remove('hidden');
       } catch (err) {
-        dlog('FAILED at some step: ' + err.message);
+        dlog('FAILED: ' + err.message);
         uploadError.textContent = 'Upload failed: ' + err.message;
         uploadError.classList.remove('hidden');
       } finally {
@@ -341,8 +354,8 @@
     });
 
     // ==================== INIT ====================
-    dlog('Step 0: Full script reached the end. Calling renderBeats()...');
-    renderBeats().then(() => dlog('Step 0b: renderBeats() finished OK.')).catch(err => dlog('Step 0b FAILED: ' + err.message));
+    dlog('Script fully loaded. Calling renderBeats()...');
+    renderBeats().then(() => dlog('renderBeats() finished.')).catch(err => dlog('renderBeats() failed: ' + err.message));
   </script>
 </body>
 </html>
