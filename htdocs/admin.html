@@ -39,6 +39,9 @@
     <span class="font-mono text-xs text-bonedim/50">Admin</span>
   </header>
 
+  <!-- DEBUG LOG PANEL (will appear below) -->
+  <div id="debug-log" style="background:#1a1816;color:#ff6b6b;padding:10px;font-size:12px;white-space:pre-wrap;max-height:200px;overflow:auto;border:1px solid #444;margin-top:10px;border-radius:6px;font-family:monospace;"></div>
+
   <section class="mt-6 bg-surface border border-surface2 rounded-xl p-5">
     <h2 class="font-display text-xl tracking-wide">Upload New Beat</h2>
     <form id="upload-form" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -121,11 +124,34 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // ===== CONFIG =====
     var SUPABASE_URL = "https://dxfvzytpfohvhtjsdjokv.supabase.co";
     var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4ZnZ6eXRmcG9odmh0c2pkb3ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODM2MTUsImV4cCI6MjA5OTg1OTYxNX0.WbonRSoy9PmRq8UauGpA_UTM2Qs8ZBV0elJMbeigSyQ";
     var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    var STORAGE_BUCKET = "beats2";
+    var STORAGE_BUCKET = "beats"; // change to "beats2" if you created a new bucket
 
+    // ===== DEBUG LOGGER =====
+    function logDebug(msg) {
+      var el = document.getElementById('debug-log');
+      if (el) el.textContent += msg + '\n';
+      console.log(msg);
+    }
+    logDebug('🔍 DEBUG STARTED');
+
+    // ===== Test bucket connection =====
+    sb.storage.getBucket(STORAGE_BUCKET)
+      .then(function(res) {
+        if (res.error) {
+          logDebug('❌ Bucket error: ' + JSON.stringify(res.error));
+        } else {
+          logDebug('✅ Bucket exists: ' + JSON.stringify(res.data));
+        }
+      })
+      .catch(function(err) {
+        logDebug('❌ Bucket fetch fail: ' + err.message);
+      });
+
+    // ===== DOM refs =====
     var listEl = document.getElementById('admin-beat-list');
     var emptyEl = document.getElementById('admin-empty');
     var rowTemplate = document.getElementById('admin-row-template');
@@ -133,34 +159,20 @@
 
     var GENRE_LABEL = { afrobeat: 'Afrobeat', trap: 'Rap/Trap', rage: 'Underground Rage', rnb: 'R&B' };
 
+    // ===== Fetch beats =====
     function fetchBeats() {
-      return sb.from('beats').select('*').order('created_at', { ascending: false }).then(function(res) {
-        if (res.error) {
-          console.error('Fetch error', res.error);
-          return [];
-        }
-        return res.data || [];
-      });
+      return sb.from('beats').select('*').order('created_at', { ascending: false })
+        .then(function(res) {
+          if (res.error) logDebug('❌ Fetch beats error: ' + JSON.stringify(res.error));
+          return res.data || [];
+        });
     }
 
-    function renderBeats() {
-      return fetchBeats().then(function(beats) {
-        listEl.innerHTML = '';
-        if (beats.length === 0) {
-          emptyEl.classList.remove('hidden');
-          return;
-        }
-        emptyEl.classList.add('hidden');
-        for (var i = 0; i < beats.length; i++) {
-          listEl.appendChild(buildRow(beats[i]));
-        }
-      });
-    }
-
+    // ===== Build row =====
     var currentPlayingRow = null;
 
     function togglePlay(beat, row, btn) {
-      var isThisPlaying = currentPlayingRow === row && !adminPlayer.paused;
+      var isThisPlaying = (currentPlayingRow === row && !adminPlayer.paused);
       adminPlayer.pause();
       if (currentPlayingRow) {
         currentPlayingRow.querySelector('.play-icon').classList.remove('hidden');
@@ -223,97 +235,114 @@
       return row;
     }
 
-    function uploadToSupabaseStorage(file) {
-      var ts = Date.now();
-      var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      var path = 'audio/' + ts + '_' + safeName;
-      return sb.storage.from(STORAGE_BUCKET).upload(path, file, { cacheControl: '3600', upsert: false }).then(function(res) {
-        if (res.error) throw new Error(res.error.message);
-        var pub = sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-        return { publicUrl: pub.data.publicUrl, path: path };
+    function renderBeats() {
+      return fetchBeats().then(function(beats) {
+        listEl.innerHTML = '';
+        if (beats.length === 0) {
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+        emptyEl.classList.add('hidden');
+        for (var i = 0; i < beats.length; i++) {
+          listEl.appendChild(buildRow(beats[i]));
+        }
       });
     }
 
-    function saveBeatToSupabase(beat) {
-      return sb.from('beats').insert([{
-        title: beat.title,
-        bpm: beat.bpm,
-        genre: beat.genre,
-        price: beat.price,
-        key: beat.key,
-        audio_url: beat.audioUrl,
-        storage_path: beat.storagePath
-      }]).select().then(function(res) {
-        if (res.error) throw new Error(res.error.message);
-        return res.data;
-      });
-    }
-
+    // ===== Upload with detailed debug =====
     var uploadForm = document.getElementById('upload-form');
     var uploadBtn = document.getElementById('upload-submit-btn');
     var progressWrap = document.getElementById('upload-progress-wrap');
     var progressFill = document.getElementById('upload-progress-fill');
-    var progressPct = document.getElementById('upload-progress-pct');
     var uploadError = document.getElementById('upload-error');
     var uploadSuccess = document.getElementById('upload-success');
 
     uploadForm.addEventListener('submit', function(e) {
       e.preventDefault();
+      logDebug('📤 Upload clicked');
       uploadError.classList.add('hidden');
       uploadSuccess.classList.add('hidden');
 
-      var title = document.getElementById('f-title').value.trim();
+      var title = document.getElementById('f-title').value.trim() || 'Untitled';
       var bpmVal = document.getElementById('f-bpm').value;
       var bpm = bpmVal ? Number(bpmVal) : null;
-      var genre = document.getElementById('f-genre').value;
+      var genre = document.getElementById('f-genre').value || null;
       var priceVal = document.getElementById('f-price').value;
       var price = priceVal ? Number(priceVal) : 0;
       var key = document.getElementById('f-key').value.trim() || null;
       var file = document.getElementById('f-audio').files[0];
+
+      if (!file) {
+        logDebug('❌ No file selected');
+        uploadError.textContent = 'Please select an audio file.';
+        uploadError.classList.remove('hidden');
+        return;
+      }
 
       uploadBtn.disabled = true;
       progressWrap.classList.remove('hidden');
       progressWrap.classList.add('flex');
       progressFill.style.width = '50%';
 
-      var uploadPromise;
-      if (file) {
-        uploadPromise = uploadToSupabaseStorage(file);
-      } else {
-        uploadPromise = Promise.resolve(null);
-      }
+      var ts = Date.now();
+      var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var path = 'audio/' + ts + '_' + safeName;
 
-      uploadPromise.then(function(result) {
-        progressFill.style.width = '90%';
-        var newBeat = {
-          title: title || 'Untitled',
-          bpm: bpm,
-          genre: genre || null,
-          price: price,
-          key: key,
-          audioUrl: result ? result.publicUrl : null,
-          storagePath: result ? result.path : null
-        };
-        return saveBeatToSupabase(newBeat);
-      }).then(function() {
-        progressFill.style.width = '100%';
-        return renderBeats();
-      }).then(function() {
-        uploadForm.reset();
-        uploadSuccess.textContent = 'Beat uploaded successfully!';
-        uploadSuccess.classList.remove('hidden');
-      })['catch'](function(err) {
-        uploadError.textContent = 'Upload failed: ' + err.message;
-        uploadError.classList.remove('hidden');
-      })['finally'](function() {
-        uploadBtn.disabled = false;
-        progressWrap.classList.add('hidden');
-        progressWrap.classList.remove('flex');
-        progressFill.style.width = '0%';
-      });
+      logDebug('⬆️ Uploading to: ' + STORAGE_BUCKET + '/' + path);
+      sb.storage.from(STORAGE_BUCKET).upload(path, file, { cacheControl: '3600', upsert: false })
+        .then(function(res) {
+          if (res.error) {
+            logDebug('❌ Storage upload error: ' + JSON.stringify(res.error));
+            throw res.error;
+          }
+          logDebug('✅ Storage upload success');
+          progressFill.style.width = '90%';
+          var pub = sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+          return { publicUrl: pub.data.publicUrl, path: path };
+        })
+        .then(function(result) {
+          var newBeat = {
+            title: title,
+            bpm: bpm,
+            genre: genre,
+            price: price,
+            key: key,
+            audioUrl: result.publicUrl,
+            storagePath: result.path
+          };
+          logDebug('📝 Inserting into beats table...');
+          return sb.from('beats').insert([newBeat]).select();
+        })
+        .then(function(res) {
+          if (res.error) {
+            logDebug('❌ Table insert error: ' + JSON.stringify(res.error));
+            throw res.error;
+          }
+          logDebug('✅ Table insert success');
+          progressFill.style.width = '100%';
+          return renderBeats();
+        })
+        .then(function() {
+          uploadSuccess.textContent = 'Beat uploaded successfully!';
+          uploadSuccess.classList.remove('hidden');
+          logDebug('🎉 Upload complete');
+        })
+        .catch(function(err) {
+          logDebug('❌ FINAL ERROR: ' + err.message + ' (see details above)');
+          uploadError.textContent = 'Upload failed: ' + err.message;
+          uploadError.classList.remove('hidden');
+        })
+        .finally(function() {
+          uploadBtn.disabled = false;
+          progressWrap.classList.add('hidden');
+          progressWrap.classList.remove('flex');
+          progressFill.style.width = '0%';
+        });
     });
 
+    // ===== Initial render =====
     renderBeats();
   </script>
+
 </body>
 </html>
